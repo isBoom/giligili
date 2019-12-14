@@ -6,7 +6,7 @@ import (
 
 type Video struct {
 	ID        uint   `json:"id"`
-	Titile    string `json:"titile"`
+	Title     string `json:"title"`
 	Info      string `json:"info"`
 	CreatedAt int64  `json:"created_at"`
 }
@@ -14,7 +14,7 @@ type Video struct {
 func BuildVideo(item model.Video) Video {
 	return Video{
 		ID:        item.ID,
-		Titile:    item.Title,
+		Title:     item.Title,
 		Info:      item.Info,
 		CreatedAt: item.CreatedAt.Unix(),
 	}

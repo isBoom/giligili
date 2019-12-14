@@ -11,8 +11,7 @@ func CreateVideo(c *gin.Context) {
 	if err := c.ShouldBind(&s); err != nil {
 		c.JSON(200, ErrorResponse(err))
 	} else {
-		res := s.Create()
-		c.JSON(200, res)
+		c.JSON(200, s.Create())
 	}
 }
 func ShowVideo(c *gin.Context) {
@@ -20,8 +19,7 @@ func ShowVideo(c *gin.Context) {
 	if err := c.ShouldBind(&s); err != nil {
 		c.JSON(200, ErrorResponse(err))
 	} else {
-		res := s.Show(c.Param("id"))
-		c.JSON(200, res)
+		c.JSON(200, s.Show(c.Param("id")))
 	}
 }
 func ListVideo(c *gin.Context) {

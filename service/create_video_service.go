@@ -9,7 +9,7 @@ import (
 // CreateVideoService 上传视频
 type CreateVideoService struct {
 	Title string `json:"title" form:"title" binding:"required,min=2,max=30"`
-	Info  string `json:"info" form:"info" binding:"required,min=0,max=300"`
+	Info  string `json:"info" form:"info" binding:"min=0,max=300"`
 }
 
 func (service *CreateVideoService) Create() serializer.Response {
