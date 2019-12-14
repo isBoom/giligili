@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/google/uuid"
 	"os"
@@ -34,6 +35,7 @@ func (s *UploadTokenService) Post() serializer.Response {
 	}
 
 	key := "upload/avatar/" + uuid.Must(uuid.NewRandom()).String() + s.FileName
+	fmt.Print(key, s)
 
 	signedPutRul, err := bucket.SignURL(key, oss.HTTPPut, 600, options...)
 	if err != nil {
