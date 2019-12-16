@@ -26,7 +26,8 @@ func NewRouter() *gin.Engine {
 		v1.POST("ping", api.Ping)
 		v1.POST("user/register", api.UserRegister)
 		v1.POST("user/login", api.UserLogin)
-		v1.POST("upload/video", api.UploadVideo)
+		v1.POST("upload/tokenAvatar", api.UploadAvatarToken)
+		v1.POST("upload/tokenVideo", api.UploadVideoToken)
 		// 需要登录保护的
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired())

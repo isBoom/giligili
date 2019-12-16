@@ -1,10 +1,11 @@
 package service
 
 import (
-	"fmt"
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/google/uuid"
+	"mime"
 	"os"
+	"path/filepath"
 	"singo/serializer"
 )
 
@@ -12,8 +13,8 @@ type UploadTokenService struct {
 	FileName string `json:"fileName" form:"fileName"`
 }
 
-func (s *UploadTokenService) Post() serializer.Response {
-	client, err := oss.New(os.Getenv("OSS_Endpoint"), os.Getenv("OSS_AccessKeyId"), os.Getenv(""))
+func (s *UploadTokenService) Post(src string) serializer.Response {
+	client, err := oss.New(os.Getenv("OSS_Endpoint"), os.Getenv("OSS_AccessKeyId"), os.Getenv("OSS_AccessKeySecret"))
 	if err != nil {
 		return serializer.Response{
 			Code:  5002,
@@ -31,13 +32,12 @@ func (s *UploadTokenService) Post() serializer.Response {
 	}
 
 	options := []oss.Option{
-		oss.ContentType("image/png"),
+		oss.ContentType(mime.TypeByExtension(filepath.Ext(s.FileName))),
 	}
 
-	key := "upload/avatar/" + uuid.Must(uuid.NewRandom()).String() + s.FileName
-	fmt.Print(key, s)
+	key := src + uuid.Must(uuid.NewRandom()).String() + "_" + s.FileName
 
-	signedPutRul, err := bucket.SignURL(key, oss.HTTPPut, 600, options...)
+	signedPutUrl, err := bucket.SignURL(key, oss.HTTPPut, 600, options...)
 	if err != nil {
 		return serializer.Response{
 			Code:  5002,
@@ -46,7 +46,7 @@ func (s *UploadTokenService) Post() serializer.Response {
 		}
 	}
 
-	signedGetRul, err := bucket.SignURL(key, oss.HTTPGet, 600)
+	signedGetUrl, err := bucket.SignURL(key, oss.HTTPGet, 600)
 	if err != nil {
 		return serializer.Response{
 			Code:  5002,
@@ -58,8 +58,8 @@ func (s *UploadTokenService) Post() serializer.Response {
 	return serializer.Response{
 		Data: map[string]string{
 			"key": key,
-			"put": signedPutRul,
-			"get": signedGetRul,
+			"put": signedPutUrl,
+			"get": signedGetUrl,
 		},
 	}
 }

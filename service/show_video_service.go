@@ -6,8 +6,8 @@ import (
 )
 
 type ShowVideoServics struct {
-	Title string `json:"title" form:"title"`
-	Info  string `json:"info" form:"info"`
+	Title string `json:"title"`
+	Info  string `json:"info"`
 }
 
 func (v *ShowVideoServics) Show(id string) serializer.Response {
@@ -20,6 +20,6 @@ func (v *ShowVideoServics) Show(id string) serializer.Response {
 		}
 	}
 	return serializer.Response{
-		Data: video,
+		Data: serializer.BuildVideo(video),
 	}
 }

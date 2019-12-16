@@ -8,15 +8,19 @@ import (
 
 // CreateVideoService 上传视频
 type CreateVideoService struct {
-	Title string `json:"title" form:"title" binding:"required,min=2,max=30"`
-	Info  string `json:"info" form:"info" binding:"min=0,max=300"`
+	Title  string `json:"title" form:"title" binding:"required,min=2,max=50"`
+	Info   string `json:"info" form:"info" binding:"min=2,max=500"`
+	Url    string `json:"url" form:"url" binding:"required`
+	Avatar string `json:"avatar" form:"avatar"`
 }
 
 func (service *CreateVideoService) Create() serializer.Response {
 
 	v := model.Video{
-		Title: service.Title,
-		Info:  service.Info,
+		Title:  service.Title,
+		Info:   service.Info,
+		Url:    service.Url,
+		Avatar: service.Avatar,
 	}
 	if err := model.DB.Create(&v).Error; err != nil {
 		return serializer.Response{
