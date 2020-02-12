@@ -19,15 +19,13 @@ func NewRouter() *gin.Engine {
 	// 路由
 	v1 := r.Group("/api/v1")
 	{
-		v1.POST("videos", api.CreateVideo)
 		v1.GET("video/:id", api.ShowVideo)
+		//v1.GET("user/:id", api.OtherUserInfo)
 		v1.GET("videos", api.ListVideo)
-		v1.PUT("videos/:id", api.UpdateVideo)
 		v1.POST("ping", api.Ping)
 		v1.POST("user/register", api.UserRegister)
 		v1.POST("user/login", api.UserLogin)
-		v1.POST("upload/tokenAvatar", api.UploadAvatarToken)
-		v1.POST("upload/tokenVideo", api.UploadVideoToken)
+
 		// 需要登录保护的
 		auth := v1.Group("")
 		auth.Use(middleware.AuthRequired())
@@ -35,7 +33,10 @@ func NewRouter() *gin.Engine {
 			// User Routing
 			auth.GET("user/me", api.UserMe)
 			auth.DELETE("user/logout", api.UserLogout)
-
+			auth.POST("upload/tokenAvatar", api.UploadAvatarToken)
+			auth.POST("upload/tokenVideo", api.UploadVideoToken)
+			auth.PUT("videos/:id", api.UpdateVideo)
+			auth.POST("videos", api.CreateVideo)
 		}
 	}
 	return r

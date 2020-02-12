@@ -19,6 +19,7 @@ func (v *ShowVideoServics) Show(id string) serializer.Response {
 			Error: err.Error(),
 		}
 	}
+
 	return serializer.Response{
 		Data: serializer.BuildVideo(video),
 	}

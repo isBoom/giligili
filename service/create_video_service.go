@@ -1,7 +1,7 @@
 package service
 
 import (
-	"fmt"
+	"github.com/gin-gonic/gin"
 	"singo/model"
 	"singo/serializer"
 )
@@ -12,9 +12,10 @@ type CreateVideoService struct {
 	Info   string `json:"info" form:"info" binding:"min=2,max=500"`
 	Url    string `json:"url" form:"url" binding:"required`
 	Avatar string `json:"avatar" form:"avatar"`
+	UserId uint   `json:"userId" form:"userId"`
 }
 
-func (service *CreateVideoService) Create() serializer.Response {
+func (service *CreateVideoService) Create(c *gin.Context) serializer.Response {
 
 	v := model.Video{
 		Title:  service.Title,
@@ -22,6 +23,18 @@ func (service *CreateVideoService) Create() serializer.Response {
 		Url:    service.Url,
 		Avatar: service.Avatar,
 	}
+
+	if user, _ := c.Get("user"); user != nil {
+		if u, ok := user.(*model.User); ok {
+			v.UserId = u.ID
+		} else {
+			return serializer.Response{
+				Code: 5001,
+				Msg:  "未登录，请登陆后再上传视频",
+			}
+		}
+	}
+
 	if err := model.DB.Create(&v).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
@@ -29,6 +42,5 @@ func (service *CreateVideoService) Create() serializer.Response {
 			Error: err.Error(),
 		}
 	}
-	fmt.Println(v)
 	return serializer.Response{Data: serializer.BuildVideo(v)}
 }
