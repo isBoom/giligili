@@ -4,6 +4,8 @@ import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/jinzhu/gorm"
 	"os"
+	"singo/cache"
+	"strconv"
 	"strings"
 )
 
@@ -24,11 +26,6 @@ func (video *Video) AvatarUrl() string {
 		signedGetURL = "https://xxxholic.oss-cn-hongkong.aliyuncs.com/upload/avatar/defaultAvatar.jpg"
 	}
 	return signedGetURL
-	//if video.Avatar != "" {
-	//	return os.Getenv("OSS_UserInfoUrl") + video.Avatar
-	//} else {
-	//	return ""
-	//}
 }
 
 func (video *Video) VideoUrl() string {
@@ -36,4 +33,12 @@ func (video *Video) VideoUrl() string {
 	bucket, _ := client.Bucket(os.Getenv("OSS_BUCKER"))
 	signedGetURL, _ := bucket.SignURL(video.Url, oss.HTTPGet, 3600)
 	return signedGetURL
+}
+func (video *Video) AddView() {
+	cache.RedisClient.Incr(cache.VideoViewKey(video.ID))
+	cache.RedisClient.ZIncrBy(cache.DailyRankKey, 1, strconv.Itoa(int(video.ID)))
+}
+func (video *Video) GetView() uint64 {
+	count, _ := cache.RedisClient.Get(cache.VideoViewKey(video.ID)).Uint64()
+	return count
 }

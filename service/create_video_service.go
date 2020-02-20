@@ -1,7 +1,6 @@
 package service
 
 import (
-	"github.com/gin-gonic/gin"
 	"singo/model"
 	"singo/serializer"
 )
@@ -15,24 +14,19 @@ type CreateVideoService struct {
 	UserId uint   `json:"userId" form:"userId"`
 }
 
-func (service *CreateVideoService) Create(c *gin.Context) serializer.Response {
-
+func (service *CreateVideoService) Create(user *model.User) serializer.Response {
+	if user == nil {
+		return serializer.Response{
+			Code: 5001,
+			Msg:  "未登录，请登陆后再上传视频",
+		}
+	}
 	v := model.Video{
 		Title:  service.Title,
 		Info:   service.Info,
 		Url:    service.Url,
 		Avatar: service.Avatar,
-	}
-
-	if user, _ := c.Get("user"); user != nil {
-		if u, ok := user.(*model.User); ok {
-			v.UserId = u.ID
-		} else {
-			return serializer.Response{
-				Code: 5001,
-				Msg:  "未登录，请登陆后再上传视频",
-			}
-		}
+		UserId: user.ID,
 	}
 
 	if err := model.DB.Create(&v).Error; err != nil {

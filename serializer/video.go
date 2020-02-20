@@ -5,16 +5,18 @@ import (
 )
 
 type Video struct {
+	User      User   `json:"user"`
 	ID        uint   `json:"id"`
 	Title     string `json:"title"`
 	Info      string `json:"info"`
+	View      uint64 `json:"view"`
 	CreatedAt int64  `json:"created_at"`
-	Url       string `json:"url"`
 	Avatar    string `json:"avatar"`
-	UserId    uint   `json:"userId"`
+	Url       string `json:"url"`
 }
 
 func BuildVideo(item model.Video) Video {
+	user, _ := model.GetUser(item.UserId)
 	return Video{
 		ID:        item.ID,
 		Title:     item.Title,
@@ -22,7 +24,8 @@ func BuildVideo(item model.Video) Video {
 		CreatedAt: item.CreatedAt.Unix(),
 		Url:       item.VideoUrl(),
 		Avatar:    item.AvatarUrl(),
-		UserId:    item.UserId,
+		User:      BuildUser(user),
+		View:      item.GetView(),
 	}
 }
 func BuildVideos(item []model.Video) (videos []Video) {

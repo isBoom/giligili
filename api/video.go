@@ -6,12 +6,12 @@ import (
 )
 
 func CreateVideo(c *gin.Context) {
-
+	user := CurrentUser(c)
 	s := service.CreateVideoService{}
 	if err := c.ShouldBind(&s); err != nil {
 		c.JSON(200, ErrorResponse(err))
 	} else {
-		c.JSON(200, s.Create(c))
+		c.JSON(200, s.Create(user))
 	}
 }
 func ShowVideo(c *gin.Context) {
