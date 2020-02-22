@@ -1,7 +1,6 @@
 package main
 
 import (
-	_ "github.com/icattlecoder/godaemon"
 	"singo/conf"
 	"singo/server"
 )
