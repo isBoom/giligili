@@ -1,31 +1,53 @@
 version: '2'
 
 services:
-  giligili:
-      build: ./
-      image: giligili
-      container_name: giligili
-      restart: always
-      ports:
-        - "8000:8000"
-      depends_on:
-        - redis
-        - mysql
-      links:
-        - redis
-        - mysql
-  mysql:
-     container_name: mysql
-     image: mysql:5.6
-     restart: always
-     environment:
-        MYSQL_ROOT_PASSWORD: sakura
-        MYSQL_DATABASE: giligili
-     ports:
-       - "3306:3306"
+#  giligili:
+#    build: ./
+#    image: giligili
+#    container_name: giligili
+#    restart: always
+#    ports:
+#      - "8000:8000"
+#    depends_on:
+#      - redis
+#      - mysql
+#    links:
+#      - redis
+#      - mysql
+#  mysql:
+#    container_name: mysql
+#    image: mysql:5.6
+#    restart: always
+#    volumes:
+#      - ./volumes/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+#      - ./volumes/mysqlData:/var/lib/mysql
+#      - ./volumes/mysqlLog:/var/log/mysql
+#    environment:
+#      MYSQL_ROOT_PASSWORD: sakura
+#      MYSQL_DATABASE: giligili
+#    ports:
+#      - "3306:3306"
   redis:
-      container_name: redis
-      image: redis
-      restart: always
-      ports:
-        - "6379:6379"
+    container_name: redis
+    image: redis
+    restart: always
+    volumes:
+      - ./volumes/redis.conf:/etc/redis/redis.conf
+      - ./volumes/redisData:/data
+    command: redis-server /etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+#version: "2"
+#  services:
+#    redis:
+#      image: 'redis:3.2.11'
+#      restart: always
+#      hostname: redis
+#      container_name: redis
+#      ports:
+#        - '6379:6379'
+#      command:
+#        redis-server /usr/local/etc/redis/redis.conf
+#        volumes:
+#          - ./redis_config/redis.conf:/usr/local/etc/redis/redis.conf
+#          - ./redis_data/:/data/
