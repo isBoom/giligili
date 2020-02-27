@@ -1,8 +1,11 @@
 package model
 
 import (
+	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"os"
+	"strings"
 )
 
 // User 用户模型
@@ -47,4 +50,14 @@ func (user *User) SetPassword(password string) error {
 func (user *User) CheckPassword(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(user.PasswordDigest), []byte(password))
 	return err == nil
+}
+
+func (user *User) GetAvatar(avatar string) string {
+	client, _ := oss.New(os.Getenv("OSS_Endpoint"), os.Getenv("OSS_AccessKeyId"), os.Getenv("OSS_AccessKeySecret"))
+	bucket, _ := client.Bucket(os.Getenv("OSS_BUCKER"))
+	signedGetURL, _ := bucket.SignURL(user.Avatar, oss.HTTPGet, 60)
+	if (user.Avatar == "") || strings.Contains(signedGetURL, os.Getenv("OSS_UserInfoUrl")+"?Exp") {
+		signedGetURL = "https://xxxholic.oss-cn-hongkong.aliyuncs.com/upload/headPortrait/default.jpg"
+	}
+	return signedGetURL
 }

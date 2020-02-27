@@ -22,7 +22,7 @@ func (video *Video) AvatarUrl() string {
 	client, _ := oss.New(os.Getenv("OSS_Endpoint"), os.Getenv("OSS_AccessKeyId"), os.Getenv("OSS_AccessKeySecret"))
 	bucket, _ := client.Bucket(os.Getenv("OSS_BUCKER"))
 	signedGetURL, _ := bucket.SignURL(video.Avatar, oss.HTTPGet, 60)
-	if strings.Contains(signedGetURL, os.Getenv("OSS_UserInfoUrl")+"?Exp") || (video.Avatar == "") {
+	if (video.Avatar == "") || strings.Contains(signedGetURL, os.Getenv("OSS_UserInfoUrl")+"?Exp") {
 		signedGetURL = "https://xxxholic.oss-cn-hongkong.aliyuncs.com/upload/avatar/defaultAvatar.jpg"
 	}
 	return signedGetURL
