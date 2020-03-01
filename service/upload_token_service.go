@@ -3,7 +3,6 @@ package service
 import (
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
 	"github.com/google/uuid"
-	"mime"
 	"os"
 	"path/filepath"
 	"singo/serializer"
@@ -32,7 +31,7 @@ func (s *UploadTokenService) Post(src string) serializer.Response {
 	}
 
 	options := []oss.Option{
-		oss.ContentType(mime.TypeByExtension(filepath.Ext(s.FileName))),
+		oss.ContentType(os.Getenv(filepath.Ext(s.FileName))),
 	}
 
 	key := src + uuid.Must(uuid.NewRandom()).String() + "_" + s.FileName
