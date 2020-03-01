@@ -13,7 +13,7 @@ type DailyRankService struct {
 
 func (s *DailyRankService) Get() serializer.Response {
 	var videos []model.Video
-	vds, _ := cache.RedisClient.ZRevRange(cache.DailyRankKey, 0, 9).Result()
+	vds, _ := cache.RedisClient.ZRevRange(cache.DailyRankKey, 0, 10).Result()
 	if len(vds) > 0 {
 		order := fmt.Sprintf("Field(id,%s)", strings.Join(vds, ","))
 		if err := model.DB.Where("id in (?)", vds).Order(order).Find(&videos).Error; err != nil {
