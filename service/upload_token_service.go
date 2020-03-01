@@ -12,6 +12,21 @@ type UploadTokenService struct {
 	FileName string `json:"fileName" form:"fileName"`
 }
 
+func getContentType(s string) string {
+	switch filepath.Ext(s) {
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".jpeg":
+		return "image/jpeg"
+	case ".jpg":
+		return "image/jpeg"
+	case ".mp4":
+		return "video/mp4"
+	}
+	return ""
+}
 func (s *UploadTokenService) Post(src string) serializer.Response {
 	client, err := oss.New(os.Getenv("OSS_Endpoint"), os.Getenv("OSS_AccessKeyId"), os.Getenv("OSS_AccessKeySecret"))
 	if err != nil {
@@ -31,7 +46,7 @@ func (s *UploadTokenService) Post(src string) serializer.Response {
 	}
 
 	options := []oss.Option{
-		oss.ContentType(os.Getenv(filepath.Ext(s.FileName))),
+		oss.ContentType(getContentType(s.FileName)),
 	}
 
 	key := src + uuid.Must(uuid.NewRandom()).String() + "_" + s.FileName
