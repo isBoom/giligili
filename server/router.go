@@ -26,6 +26,7 @@ func NewRouter() *gin.Engine {
 		v1.POST("user/register", api.UserRegister)
 		v1.POST("user/login", api.UserLogin)
 		v1.GET("rank/daily", api.DailyRank)
+		v1.GET("video/:id/comments", api.GetComments)
 
 		// 需要登录保护的
 		auth := v1.Group("")
@@ -38,6 +39,7 @@ func NewRouter() *gin.Engine {
 			auth.POST("upload/tokenVideo", api.UploadVideoToken)
 			auth.PUT("videos/:id", api.UpdateVideo)
 			auth.POST("videos", api.CreateVideo)
+			auth.POST("video/comment", api.AddComment)
 		}
 	}
 	return r
