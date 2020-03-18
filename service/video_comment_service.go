@@ -98,8 +98,8 @@ func (s *VideoCommentService) Get(c *gin.Context) serializer.Response {
 		mapIndex[mod.ID] = uint(i)
 	}
 	//实现扁平数据二维化
-	for i, mod := range mods {
-		mods[i].CreatedAtInt64 = mods[i].CreatedAt.Unix()
+	for _, mod := range mods {
+		mod.CreatedAtInt64 = mod.CreatedAt.Unix()
 		if res[mapIndex[mod.FirstId]].Child == nil {
 			res[mapIndex[mod.FirstId]].Child = make([]Comments, 0)
 		}
