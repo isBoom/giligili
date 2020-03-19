@@ -5,8 +5,10 @@ import (
 )
 
 type Comment struct {
-	User      User   `json:"user" form:"user"`
 	Id        uint   `json:"id" form:"id"`
+	UserName  string `json:"user_name" form:"userName"`
+	Nickname  string `json:"nickname" form:"nickname"`
+	Avatar    string `json:"avatar" form:"avatar"`
 	VideoId   uint   `json:"videoId" form:"videoId"`
 	FirstId   uint   `json:"firstId" form:"firstId"`
 	ParentId  uint   `json:"parentId" form:"parentId"`
@@ -17,8 +19,10 @@ type Comment struct {
 func BuildComment(i model.Comment) Comment {
 	user, _ := model.GetUser(i.UserId)
 	return Comment{
-		User:      BuildUser(user),
 		Id:        i.ID,
+		UserName:  user.UserName,
+		Nickname:  user.Nickname,
+		Avatar:    user.Avatar,
 		VideoId:   i.VideoId,
 		ParentId:  i.ParentId,
 		Content:   i.Content,
