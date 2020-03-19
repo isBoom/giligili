@@ -9,6 +9,7 @@ import (
 )
 
 type VideoCommentService struct {
+	UserId   uint   `json:"userId" form:"userId"`
 	Content  string `json:"content" form:"content"`
 	VideoId  uint   `json:"videoId" form:"videoId"`
 	ParentId uint   `json:"parentId" form:"parentId"`
@@ -16,7 +17,6 @@ type VideoCommentService struct {
 }
 type Comments struct {
 	ID             uint      `json:"id" form:"id"`
-	UserId         uint      `json:"userId" form:"userId"`
 	UserName       string    `json:"user_name" form:"userName"`
 	Nickname       string    `json:"nickname" form:"nickname"`
 	Avatar         string    `json:"avatar" form:"avatar"`
