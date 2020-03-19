@@ -5,13 +5,13 @@ import (
 )
 
 type Comment struct {
-	User      User
-	Id        uint
-	VideoId   uint
-	FirstId   uint
-	ParentId  uint
-	Content   string
-	CreatedAt int64
+	User      User   `json:"user" form:"user"`
+	Id        uint   `json:"id" form:"id"`
+	VideoId   uint   `json:"videoId" form:"videoId"`
+	FirstId   uint   `json:"firstId" form:"firstId"`
+	ParentId  uint   `json:"parentId" form:"parentId"`
+	Content   string `json:"content" form:"content"`
+	CreatedAt int64  `json:"createdAt" form:"createdAt"`
 }
 
 func BuildComment(i model.Comment) Comment {
