@@ -23,7 +23,8 @@ func (video *Video) AvatarUrl() string {
 	bucket, _ := client.Bucket(os.Getenv("OSS_BUCKER"))
 	signedGetURL, _ := bucket.SignURL(video.Avatar, oss.HTTPGet, 60)
 	if (video.Avatar == "") || strings.Contains(signedGetURL, os.Getenv("OSS_UserInfoUrl")+"?Exp") {
-		signedGetURL = "https://xxxholic.oss-cn-hongkong.aliyuncs.com/upload/avatar/defaultAvatar.jpg"
+		//signedGetURL = "https://xxxholic.oss-cn-hongkong.aliyuncs.com/upload/avatar/defaultAvatar.jpg"
+		signedGetURL = ""
 	}
 	return signedGetURL
 }
