@@ -40,6 +40,7 @@ func NewRouter() *gin.Engine {
 			auth.PUT("videos/:id", api.UpdateVideo)
 			auth.POST("videos", api.CreateVideo)
 			auth.POST("video/comment", api.AddComment)
+			auth.DELETE("video/delComment", api.DelComment)
 		}
 	}
 	return r

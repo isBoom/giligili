@@ -9,6 +9,7 @@ import (
 )
 
 type VideoCommentService struct {
+	ID       uint   `json:"id" form:"id"`
 	UserId   uint   `json:"userId" form:"userId"`
 	Content  string `json:"content" form:"content"`
 	VideoId  uint   `json:"videoId" form:"videoId"`
@@ -16,7 +17,6 @@ type VideoCommentService struct {
 	FirstId  uint   `json:"firstId" form:"firstId"`
 }
 type Comments struct {
-	ID             uint      `json:"id" form:"id"`
 	UserName       string    `json:"user_name" form:"userName"`
 	Nickname       string    `json:"nickname" form:"nickname"`
 	Avatar         string    `json:"avatar" form:"avatar"`
@@ -26,6 +26,35 @@ type Comments struct {
 	Child []Comments `json:"child" form:"child"`
 }
 
+func (s *VideoCommentService) Del(user *model.User) serializer.Response {
+	if user == nil {
+		return serializer.Response{
+			Code: 5001,
+			Msg:  "未登录",
+		}
+	}
+	mod := model.Comment{}
+	if err := model.DB.Model(model.Comment{}).Where("id = ? and user_id = ?", s.ID, user.ID).First(&mod).Error; err != nil {
+		return serializer.Response{
+			Code:  5001,
+			Error: err.Error(),
+			Msg:   "这不是您的评论",
+		}
+	}
+	if err := model.DB.Model(model.Comment{}).Delete(&mod).Error; err != nil {
+		return serializer.Response{
+			Code:  5001,
+			Error: err.Error(),
+			Msg:   "删除失败",
+		}
+	} else if s.FirstId == 0 {
+		model.DB.Delete(model.Comment{}, "first_id = ？", s.ID)
+	}
+	return serializer.Response{
+		Code: 0,
+		Msg:  "删除成功",
+	}
+}
 func (s *VideoCommentService) Add(user *model.User) serializer.Response {
 	if user == nil {
 		return serializer.Response{
@@ -72,7 +101,7 @@ func (s *VideoCommentService) Get(c *gin.Context) serializer.Response {
 	if err := model.DB.Model(&model.Comment{}).
 		Select("comments.id,comments.created_at,content,video_id,first_id,parent_id,user_id,avatar,nickname,user_name").
 		Joins("left JOIN users on users.id = comments.user_id ").
-		Where("video_id = ? and parent_id = 0", c.Param("id")).
+		Where("video_id = ? and parent_id = 0 and comments.deleted_at IS NULL", c.Param("id")).
 		Order("comments.id desc").Find(&res).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
@@ -83,7 +112,7 @@ func (s *VideoCommentService) Get(c *gin.Context) serializer.Response {
 	if err := model.DB.Model(&model.Comment{}).
 		Select("comments.id,comments.created_at,content,video_id,first_id,parent_id,user_id,avatar,nickname,user_name").
 		Joins("left JOIN users on users.id = comments.user_id ").
-		Where("video_id = ? and parent_id != 0", c.Param("id")).
+		Where("video_id = ? and parent_id != 0 and comments.deleted_at IS NULL", c.Param("id")).
 		Order("comments.id desc").Find(&mods).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
