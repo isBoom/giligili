@@ -28,6 +28,7 @@ func CronJob() {
 	Cron.AddFunc("0 0 0 * * *", func() {
 		Run(RestarDailyRank)
 	})
+
 	Cron.Start()
 	fmt.Println("Cron start...")
 }

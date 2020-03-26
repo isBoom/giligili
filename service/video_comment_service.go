@@ -5,25 +5,33 @@ import (
 	"github.com/gin-gonic/gin"
 	"singo/model"
 	"singo/serializer"
+	"strconv"
 	"time"
 )
 
 type VideoCommentService struct {
-	ID       uint   `json:"id" form:"id"`
-	UserId   uint   `json:"userId" form:"userId"`
-	Content  string `json:"content" form:"content"`
-	VideoId  uint   `json:"videoId" form:"videoId"`
-	ParentId uint   `json:"parentId" form:"parentId"`
-	FirstId  uint   `json:"firstId" form:"firstId"`
+	ID           uint      `json:"id" form:"id"`
+	UserId       uint      `json:"-" form:"-"`
+	VideoId      uint      `json:"videoId" form:"videoId"`
+	FirstId      uint      `json:"firstId" form:"firstId"` //最终挂载哪条评论下
+	Content      string    `json:"content" form:"content"`
+	ParentId     uint      `json:"parentId" form:"parentId"` //直接父级评论
+	Count        uint      `json:"count" json:"count"`
+	ParentUserId uint      `json:"-" form:"-"`
+	CreatedAt    time.Time `json:"-" form:"-"`
+	limitStart   uint
+	limitEnd     uint
 }
 type Comments struct {
-	UserName       string    `json:"user_name" form:"userName"`
-	Nickname       string    `json:"nickname" form:"nickname"`
-	Avatar         string    `json:"avatar" form:"avatar"`
-	CreatedAt      time.Time `json:"-" form:"-"`
-	CreatedAtInt64 int64     `json:"createdAt" form:"createdAt"`
+	User       serializer.User `json:"user" form:"user"`
+	ParentUser serializer.User `json:"parentUser" form:"parentUser"`
 	VideoCommentService
-	Child []Comments `json:"child" form:"child"`
+	CreatedAtInt64 int64      `json:"createdAt" form:"createdAt"`
+	Child          []Comments `json:"child" form:"child"`
+}
+type ResData struct {
+	Count    uint        `json:"count" form:"count"`
+	Comments interface{} `json:"comments" form:"comments"`
 }
 
 func (s *VideoCommentService) Del(user *model.User) serializer.Response {
@@ -41,14 +49,20 @@ func (s *VideoCommentService) Del(user *model.User) serializer.Response {
 			Msg:   "这不是您的评论",
 		}
 	}
-	if err := model.DB.Model(model.Comment{}).Delete(&mod).Error; err != nil {
+	if err := model.DB.Delete(&mod).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
 			Error: err.Error(),
 			Msg:   "删除失败",
 		}
-	} else if s.FirstId == 0 {
-		model.DB.Delete(model.Comment{}, "first_id = ？", s.ID)
+	} else if mod.FirstId == 0 {
+		if err := model.DB.Delete(model.Comment{}, "first_id = ?", s.ID).Error; err != nil {
+			return serializer.Response{
+				Code:  5001,
+				Error: err.Error(),
+				Msg:   "删除子评论失败",
+			}
+		}
 	}
 	return serializer.Response{
 		Code: 0,
@@ -56,6 +70,7 @@ func (s *VideoCommentService) Del(user *model.User) serializer.Response {
 	}
 }
 func (s *VideoCommentService) Add(user *model.User) serializer.Response {
+	fmt.Printf("%+v", s)
 	if user == nil {
 		return serializer.Response{
 			Code: 5001,
@@ -74,14 +89,15 @@ func (s *VideoCommentService) Add(user *model.User) serializer.Response {
 		} else {
 			s.FirstId = com.FirstId
 		}
+		s.ParentUserId = com.UserId
 	}
-
 	c := model.Comment{
-		UserId:   user.ID,
-		VideoId:  s.VideoId,
-		ParentId: s.ParentId,
-		Content:  s.Content,
-		FirstId:  s.FirstId,
+		UserId:       user.ID,
+		VideoId:      s.VideoId,
+		ParentId:     s.ParentId,
+		ParentUserId: s.ParentUserId,
+		Content:      s.Content,
+		FirstId:      s.FirstId,
 	}
 	if err := model.DB.Create(&c).Error; err != nil {
 		return serializer.Response{
@@ -94,91 +110,85 @@ func (s *VideoCommentService) Add(user *model.User) serializer.Response {
 }
 
 func (s *VideoCommentService) Get(c *gin.Context) serializer.Response {
-	//一次性查询所有评论
+	//子评论
 	mods := make([]Comments, 0)
-	//最终返回结果
+	//父评论
 	res := make([]Comments, 0)
-	if err := model.DB.Model(&model.Comment{}).
-		Select("comments.id,comments.created_at,content,video_id,first_id,parent_id,user_id,avatar,nickname,user_name").
-		Joins("left JOIN users on users.id = comments.user_id ").
-		Where("video_id = ? and parent_id = 0 and comments.deleted_at IS NULL", c.Param("id")).
-		Order("comments.id desc").Find(&res).Error; err != nil {
+	//用户表
+	user := make([]model.User, 0)
+	//构建评论所需的map
+	mapUser := make(map[uint]model.User, 0)
+	var count uint
+	if err := model.DB.Model(Comments{}).Where("video_id = ? and deleted_at IS NULL", c.Param("id")).Count(&count).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
-			Msg:   "获取评论失败",
+			Msg:   "获取评论数失败",
 			Error: err.Error(),
 		}
 	}
-	if err := model.DB.Model(&model.Comment{}).
-		Select("comments.id,comments.created_at,content,video_id,first_id,parent_id,user_id,avatar,nickname,user_name").
-		Joins("left JOIN users on users.id = comments.user_id ").
-		Where("video_id = ? and parent_id != 0 and comments.deleted_at IS NULL", c.Param("id")).
-		Order("comments.id desc").Find(&mods).Error; err != nil {
+	//所有父评论
+	if err := model.DB.Where("video_id = ? and parent_id = 0 and deleted_at IS NULL", c.Param("id")).Order("id desc").Find(&res).Error; err != nil {
 		return serializer.Response{
 			Code:  5001,
-			Msg:   "获取评论失败",
+			Msg:   "获取父评论失败",
 			Error: err.Error(),
 		}
 	}
-	//标识父评论下标
+	if err := model.DB.Where("video_id = ? and parent_id != 0 and deleted_at IS NULL", c.Param("id")).Order("id desc").Find(&mods).Error; err != nil {
+		return serializer.Response{
+			Code:  5001,
+			Msg:   "获取子评论失败",
+			Error: err.Error(),
+		}
+	}
+	//构建用户表
+	for _, value := range res {
+		mapUser[value.UserId] = model.User{}
+	}
+	for _, value := range mods {
+		mapUser[value.UserId] = model.User{}
+		mapUser[value.ParentId] = model.User{}
+	}
+	//拼接userId
+	userIdString := make([]string, 0)
+	for key, _ := range mapUser {
+		userIdString = append(userIdString, strconv.Itoa(int(key)))
+	}
+	if err := model.DB.Where("id in (?)", userIdString).Find(&user).Error; err != nil {
+		return serializer.Response{
+			Code:  5001,
+			Msg:   "获取用户信息失败",
+			Error: err.Error(),
+		}
+	}
+	//构建map
+	for key, value := range user {
+		mapUser[value.ID] = user[key]
+	}
 	mapIndex := make(map[uint]uint)
 	for i, mod := range res {
+		//添加时间戳
 		res[i].CreatedAtInt64 = res[i].CreatedAt.Unix()
+		//添加用户信息
+		res[i].User = serializer.BuildUser(mapUser[mod.UserId])
+		//构建下标信息
 		mapIndex[mod.ID] = uint(i)
 	}
-	//实现扁平数据二维化
+	//实现二维化评论
 	for _, mod := range mods {
+		mod.User = serializer.BuildUser(mapUser[mod.UserId])
+		mod.ParentUser = serializer.BuildUser(mapUser[mod.ParentUserId])
 		mod.CreatedAtInt64 = mod.CreatedAt.Unix()
-		if res[mapIndex[mod.FirstId]].Child == nil {
-			res[mapIndex[mod.FirstId]].Child = make([]Comments, 0)
+		if _, ok := mapIndex[mod.FirstId]; ok {
+			if res[mapIndex[mod.FirstId]].Child == nil {
+				res[mapIndex[mod.FirstId]].Child = make([]Comments, 0)
+			}
+			res[mapIndex[mod.FirstId]].Child = append(res[mapIndex[mod.FirstId]].Child, mod)
 		}
-		res[mapIndex[mod.FirstId]].Child = append(res[mapIndex[mod.FirstId]].Child, mod)
-		fmt.Println(res)
+
 	}
-	return serializer.Response{Data: res}
-	//users := make([]serializer.User, 0)
-	//mods := make([]Comments, 0)
-	//res := make([]Comments, 0)
-	//mapUser := make(map[uint]*serializer.User)
-	//
-	////指示最高级评论
-	//mapFather := make(map[uint]uint)
-	////指示最高级评论所在切片下标
-	//mapIndex := make(map[uint]uint)
-	//if err := model.DB.Model(&model.Comment{}).Where("video_id = ?", c.Param("id")).Find(&mods).Error; err != nil {
-	//	return serializer.Response{
-	//		Code:  5001,
-	//		Msg:   "获取评论失败",
-	//		Error: err.Error(),
-	//	}
-	//}
-	//if err := model.DB.Model(&serializer.User{}).Select("DISTINCT users.id,users.user_name,users.nickname,users.avatar").Joins("left JOIN comments on users.id = comments.user_id ").Where("video_id = ?", c.Param("id")).Find(&users).Error; err != nil {
-	//	return serializer.Response{
-	//		Code:  5001,
-	//		Msg:   "获取评论失败",
-	//		Error: err.Error(),
-	//	}
-	//}
-	//for i, mod := range users {
-	//	mapUser[mod.ID] = &users[i]
-	//}
-	////实现扁平数据二维化
-	//for _, mod := range mods {
-	//	mod.Users = *mapUser[mod.UserId]
-	//	if mod.ParentId == 0 {
-	//		mapIndex[mod.ID] = uint(len(res))
-	//		res = append(res, mod)
-	//	} else {
-	//		if mapFather[mod.ParentId] == 0 {
-	//			//此时为二级评论
-	//			mapFather[mod.ID] = mod.ParentId
-	//		} else {
-	//			//n级评论
-	//			mapFather[mod.ID] = mapFather[mod.ParentId]
-	//		}
-	//		//最高级评论添加二级到n级子评论
-	//		res[mapIndex[mapFather[mod.ID]]].Child = append(res[mapIndex[mapFather[mod.ID]]].Child, mod)
-	//	}
-	//}
-	//return serializer.Response{Data: res}
+	return serializer.Response{Data: ResData{
+		Count:    count,
+		Comments: res,
+	}}
 }
