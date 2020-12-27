@@ -1,32 +1,32 @@
 version: '2'
 
 services:
-#  giligili:
-#    build: ./
-#    image: giligili
-#    container_name: giligili
-#    restart: always
-#    ports:
-#      - "8000:8000"
-#    depends_on:
-#      - redis
-#      - mysql
-#    links:
-#      - redis
-#      - mysql
-#  mysql:
-#    container_name: mysql
-#    image: mysql:5.6
-#    restart: always
-#    volumes:
-#      - ./volumes/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
-#      - ./volumes/mysqlData:/var/lib/mysql
-#      - ./volumes/mysqlLog:/var/log/mysql
-#    environment:
-#      MYSQL_ROOT_PASSWORD: sakura
-#      MYSQL_DATABASE: giligili
-#    ports:
-#      - "3306:3306"
+  giligili:
+    build: ./
+    image: giligili
+    container_name: giligili
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - mysql
+    links:
+      - redis
+      - mysql
+  mysql:
+    container_name: mysql
+    image: mysql:5.6
+    restart: always
+    volumes:
+      - ./volumes/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./volumes/mysqlData:/var/lib/mysql
+      - ./volumes/mysqlLog:/var/log/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: sakura
+      MYSQL_DATABASE: giligili
+    ports:
+      - "3306:3306"
   redis:
     container_name: redis
     image: redis
